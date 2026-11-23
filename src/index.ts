@@ -1,11 +1,11 @@
 import "dotenv/config";
-import { classify, isConsole, isFair } from "./classify.js";
+import { classify, isFair } from "./classify.js";
 import { closeBrowser } from "./http.js";
 import { notify, notifyTest } from "./notify.js";
 import { writeSite } from "./site.js";
 import { sources } from "./sources/index.js";
 import { loadState, saveState, type AlertEvent } from "./state.js";
-import type { Source, SourceResult } from "./types.js";
+import { confirmNewHits, runSource } from "./run.js";
 import { fmtEur } from "./util.js";
 
 /** Don't re-alert the same listing more often than this if it flickers in and out of stock. */
@@ -14,20 +14,6 @@ const REALERT_COOLDOWN_MS = 60 * 60 * 1000;
 const PRUNE_AFTER_MS = 3 * 24 * 60 * 60 * 1000;
 
 const DRY_RUN = process.argv.includes("--dry-run");
-
-async function runSource(s: Source): Promise<{ source: Source; result?: SourceResult; error?: string }> {
-  try {
-    const result = await s.run();
-    result.offers = result.offers.filter((o) => isConsole(o.title));
-    // Degraded-run guard: a suspiciously empty read must not be mistaken for "all sold out".
-    if (result.offers.length < s.minOffers) {
-      return { source: s, error: `only ${result.offers.length} listings (expected ≥ ${s.minOffers}), read ignored` };
-    }
-    return { source: s, result };
-  } catch (e) {
-    return { source: s, error: (e as Error).message.split("\n")[0] };
-  }
-}
 
 async function main() {
   if (process.argv.includes("--test-alert")) {
@@ -41,6 +27,7 @@ async function main() {
   console.log(`[${now}] checking ${sources.length} sources${DRY_RUN ? " (dry run: no notifications)" : ""}`);
 
   const runs = await Promise.all(sources.map(runSource));
+  await confirmNewHits(runs, (id) => Boolean(state.offers[id]?.alertable));
   await closeBrowser();
 
   const alerts: AlertEvent[] = [];

@@ -44,5 +44,6 @@ export const spielegrotte: Source = {
   name: "SpieleGrotte",
   url: URL_,
   minOffers: 0,
+  confirm: true,
   run: async () => ({ offers: parse(await fetchOrRender(URL_)) }),
 };

@@ -62,6 +62,7 @@ function make(id: string, name: string, origin: string, path: string): Source {
     name,
     url,
     minOffers: 1,
+    confirm: true,
     run: async () => ({ offers: parse(await fetchOrRender(url), id, name, origin) }),
   };
 }

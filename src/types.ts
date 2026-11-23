@@ -40,5 +40,7 @@ export interface Source {
    * the run is discarded for this source and the previous state is kept.
    */
   minOffers: number;
+  /** Reading this source costs a single request, so new hits get a second look before alerting. */
+  confirm?: boolean;
   run: () => Promise<SourceResult>;
 }

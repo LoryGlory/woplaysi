@@ -35,6 +35,8 @@ show up on the status page as *überteuert* and never alert.
 
 Other rules:
 
+- A new hit at a shop that costs one request to read is read again 15 seconds later and
+  only alerts if it is still there. Single-response blips do not reach anyone.
 - The same listing re-alerts at most once an hour if it flickers.
 - mydealz posts alert once each; the very first run only records what is already there.
 - A source that suddenly returns nothing is treated as broken, not as "sold out": its

@@ -37,5 +37,6 @@ export const alternate: Source = {
   name: "Alternate",
   url: URL_,
   minOffers: 1,
+  confirm: true,
   run: async () => ({ offers: parse(await fetchOrRender(URL_)) }),
 };

@@ -30,5 +30,6 @@ export const coolblue: Source = {
   name: "Coolblue",
   url: URL_,
   minOffers: 1,
+  confirm: true,
   run: async () => ({ offers: parse(await renderHtml(URL_)) }),
 };
