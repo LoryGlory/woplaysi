@@ -1,0 +1,386 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Wo PlaySi? Der PS5-Radar für Deutschland</title>
+<meta name="description" content="Welche PS5 ist gerade wo zu einem fairen Preis lieferbar? Alle Modelle, automatisch geprüft, mit Alarm aufs Handy.">
+<meta name="robots" content="noindex">
+<meta name="color-scheme" content="dark light">
+<link rel="alternate" type="application/atom+xml" title="Wo PlaySi: Alarme" href="feed.xml">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%230a0c12'/%3E%3Ccircle cx='32' cy='32' r='20' fill='none' stroke='%23c5f53f' stroke-width='3' opacity='.45'/%3E%3Ccircle cx='32' cy='32' r='10' fill='none' stroke='%23c5f53f' stroke-width='3' opacity='.7'/%3E%3Ccircle cx='43' cy='22' r='6' fill='%23c5f53f'/%3E%3C/svg%3E">
+<link rel="preload" href="fonts/bricolage-grotesque.woff2" as="font" type="font/woff2" crossorigin>
+<style>
+  /* Fonts are served from this site, not from Google: no third-party requests on load. */
+  @font-face { font-family: "Bricolage"; src: url("fonts/bricolage-grotesque.woff2") format("woff2"); font-weight: 200 800; font-display: swap; }
+  @font-face { font-family: "Martian"; src: url("fonts/martian-mono.woff2") format("woff2"); font-weight: 100 800; font-display: swap; }
+
+  :root {
+    --bg: #0a0c12; --surface: #11141d; --surface-2: #161a25; --line: #242a3a;
+    --ink: #f3f1ea; --muted: #8d95a8; --faint: #5b6377;
+    --signal: #c5f53f; --signal-ink: #0f1500; --ok-text: #c5f53f;
+    --warn: #ffb454; --warn-bg: rgba(255, 180, 84, .12);
+    --glow: rgba(197, 245, 63, .16);
+    --display: "Bricolage", "Segoe UI", system-ui, sans-serif;
+    --mono: "Martian", ui-monospace, "SF Mono", Menlo, monospace;
+    --r: 16px;
+  }
+  @media (prefers-color-scheme: light) {
+    :root {
+      --bg: #f2efe6; --surface: #fbf9f3; --surface-2: #f6f3ea; --line: #dad5c6;
+      --ink: #14161c; --muted: #5f6470; --faint: #8b8f99;
+      --signal: #c5f53f; --signal-ink: #141c00; --ok-text: #3d7400;
+      --warn: #a35a00; --warn-bg: rgba(163, 90, 0, .1);
+      --glow: rgba(160, 215, 20, .28);
+    }
+  }
+
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    margin: 0; color: var(--ink); background: var(--bg);
+    font: 400 16px/1.55 var(--display); -webkit-font-smoothing: antialiased;
+  }
+  /* Atmosphere: a faint dot grid and one soft glow behind the radar. */
+  body::before {
+    content: ""; position: fixed; inset: 0; z-index: -1; pointer-events: none;
+    background:
+      radial-gradient(60vmax 60vmax at 88% -8%, var(--glow), transparent 62%),
+      radial-gradient(circle at 1px 1px, color-mix(in srgb, var(--ink) 9%, transparent) 1px, transparent 0) 0 0 / 22px 22px;
+  }
+  main { max-width: 980px; margin: 0 auto; padding: 22px 20px 72px; }
+  a { color: inherit; }
+  h2 { font: 700 1.55rem/1.15 var(--display); letter-spacing: -0.02em; margin: 0 0 6px; }
+  section { margin-top: 64px; }
+  .kicker { font: 500 .68rem/1 var(--mono); letter-spacing: .14em; text-transform: uppercase; color: var(--muted); margin: 0 0 12px; }
+  .hint { color: var(--muted); margin: 0 0 20px; max-width: 62ch; }
+
+  /* ---------- top bar ---------- */
+  .top { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+  .mark { font: 800 1.25rem/1 var(--display); letter-spacing: -0.03em; text-decoration: none; white-space: nowrap; }
+  .mark b { color: var(--ok-text); font-weight: 800; }
+  .live { display: inline-flex; align-items: center; gap: 9px; font: 500 .68rem/1 var(--mono); letter-spacing: .06em; color: var(--muted);
+    border: 1px solid var(--line); border-radius: 999px; padding: 8px 12px; background: color-mix(in srgb, var(--surface) 70%, transparent); white-space: nowrap; }
+  .live i { flex: none; width: 7px; height: 7px; border-radius: 50%; background: var(--ok-text); animation: blink 2.4s ease-in-out infinite; }
+  .live.stale i { background: var(--warn); animation: none; }
+
+  /* ---------- hero ---------- */
+  .hero { margin-top: 44px; display: grid; grid-template-columns: 1fr auto; gap: 36px; align-items: center; }
+  h1 { font: 800 clamp(2.3rem, 6.4vw, 4.3rem)/0.98 var(--display); letter-spacing: -0.045em; margin: 0 0 18px; text-wrap: balance; }
+  h1 em { font-style: normal; color: var(--signal-ink); background: var(--signal); padding: 0 .14em; border-radius: .16em; box-decoration-break: clone; -webkit-box-decoration-break: clone; }
+  .sub { font-size: 1.1rem; color: var(--muted); max-width: 46ch; margin: 0 0 26px; }
+  .cta { display: flex; flex-wrap: wrap; gap: 10px; }
+  .btn { display: inline-flex; align-items: center; gap: 8px; font: 600 .95rem/1 var(--display); text-decoration: none; padding: 13px 20px; border-radius: 999px;
+    background: var(--signal); color: var(--signal-ink); border: 1px solid transparent; transition: transform .15s ease, box-shadow .15s ease, background .15s ease; }
+  .btn:hover { transform: translateY(-2px); box-shadow: 0 10px 26px -10px var(--signal); }
+  .btn.ghost { background: transparent; color: var(--ink); border-color: var(--line); }
+  .btn.ghost:hover { box-shadow: none; border-color: var(--ink); }
+  .btn svg { width: 15px; height: 15px; }
+
+  .radar { --size: clamp(190px, 27vw, 290px); width: var(--size); height: var(--size); position: relative; border-radius: 50%;
+    background:
+      repeating-radial-gradient(circle, transparent 0 calc(16.6% - 1px), color-mix(in srgb, var(--ok-text) 26%, transparent) calc(16.6% - 1px) 16.6%),
+      radial-gradient(circle, color-mix(in srgb, var(--ok-text) 12%, transparent), transparent 70%);
+    border: 1px solid color-mix(in srgb, var(--ok-text) 40%, transparent); overflow: hidden; }
+  .radar::before { content: ""; position: absolute; inset: 0;
+    background: linear-gradient(color-mix(in srgb, var(--ok-text) 22%, transparent), color-mix(in srgb, var(--ok-text) 22%, transparent)) 50% 0 / 1px 100% no-repeat,
+                linear-gradient(color-mix(in srgb, var(--ok-text) 22%, transparent), color-mix(in srgb, var(--ok-text) 22%, transparent)) 0 50% / 100% 1px no-repeat; }
+  .radar .sweep { position: absolute; inset: 0; border-radius: 50%;
+    background: conic-gradient(from 0deg, color-mix(in srgb, var(--ok-text) 55%, transparent), transparent 22%, transparent); animation: sweep 4.5s linear infinite; }
+  .radar .blip { position: absolute; width: 11px; height: 11px; margin: -5.5px; border-radius: 50%; background: var(--ok-text);
+    box-shadow: 0 0 0 0 var(--ok-text); animation: ping 2.2s ease-out infinite; }
+  .radar.idle { filter: saturate(.35); opacity: .75; }
+
+  /* ---------- model tiles ---------- */
+  .models { margin-top: 52px; display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+  .tile { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); padding: 18px; display: flex; flex-direction: column; gap: 4px; }
+  .tile .name { font: 700 1.2rem/1.2 var(--display); letter-spacing: -0.02em; }
+  .tile .rrp { color: var(--muted); font-size: .9rem; }
+  .tile .state { margin-top: 14px; padding-top: 14px; border-top: 1px dashed var(--line); font-weight: 600; display: flex; gap: 9px; align-items: baseline; }
+  .tile .state::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: var(--faint); flex: none; transform: translateY(-1px); }
+  .tile.ok { border-color: color-mix(in srgb, var(--ok-text) 55%, var(--line)); }
+  .tile.ok .state { color: var(--ok-text); } .tile.ok .state::before { background: var(--ok-text); }
+  .tile.warn .state { color: var(--warn); } .tile.warn .state::before { background: var(--warn); }
+  .tile.off .state { color: var(--muted); }
+
+  /* ---------- available now ---------- */
+  .hits { display: grid; gap: 12px; }
+  .hit { position: relative; display: grid; grid-template-columns: 1fr auto; gap: 6px 22px; align-items: center; padding: 20px 22px 20px 26px;
+    background: linear-gradient(100deg, color-mix(in srgb, var(--ok-text) 9%, var(--surface)), var(--surface) 55%);
+    border: 1px solid color-mix(in srgb, var(--ok-text) 50%, var(--line)); border-radius: var(--r); overflow: hidden; }
+  .hit::before { content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 5px; background: var(--signal); }
+  .hit .title { font: 700 1.12rem/1.25 var(--display); letter-spacing: -0.015em; overflow-wrap: anywhere; }
+  .hit .meta { color: var(--muted); font-size: .9rem; grid-column: 1; }
+  .hit .buy { grid-column: 2; grid-row: 1 / span 2; display: flex; align-items: center; gap: 18px; }
+  .price { font: 600 1.05rem/1 var(--mono); letter-spacing: -0.04em; white-space: nowrap; font-variant-numeric: tabular-nums; }
+  .hit .price { font-size: 1.3rem; }
+
+  /* ---------- subscribe ---------- */
+  .ways { display: grid; gap: 12px; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); }
+  .way { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); padding: 20px; display: flex; flex-direction: column; gap: 8px; transition: border-color .15s ease, transform .15s ease; }
+  .way:hover { border-color: var(--faint); transform: translateY(-2px); }
+  .way .no { font: 500 .68rem/1 var(--mono); letter-spacing: .14em; color: var(--ok-text); }
+  .way .name { font: 700 1.2rem/1.2 var(--display); letter-spacing: -0.02em; }
+  .way p { color: var(--muted); margin: 0 0 12px; font-size: .95rem; }
+  .way .btn { margin-top: auto; justify-content: center; }
+  code { font: 500 .8em var(--mono); background: var(--surface-2); border: 1px solid var(--line); padding: 2px 7px; border-radius: 7px; overflow-wrap: anywhere; color: var(--ink); }
+
+  /* ---------- all offers ---------- */
+  details { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); margin-bottom: 10px; overflow: hidden; }
+  summary { list-style: none; cursor: pointer; padding: 16px 20px; display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+  summary::-webkit-details-marker { display: none; }
+  summary .name { font: 700 1.08rem/1.2 var(--display); letter-spacing: -0.02em; }
+  summary .count { color: var(--muted); font-size: .9rem; margin-right: auto; }
+  summary::after { content: ""; width: 9px; height: 9px; border-right: 2px solid var(--muted); border-bottom: 2px solid var(--muted); transform: rotate(45deg) translateY(-3px); transition: transform .2s ease; }
+  details[open] summary::after { transform: rotate(-135deg) translateY(-3px); }
+  .row { display: grid; grid-template-columns: 1fr auto 104px; gap: 14px; align-items: center; padding: 12px 20px; border-top: 1px solid var(--line); }
+  .row .t { overflow-wrap: anywhere; }
+  .row .t a { text-decoration: none; font-weight: 500; }
+  .row .t a:hover { text-decoration: underline; text-underline-offset: 3px; }
+  .row .m { color: var(--muted); font-size: .85rem; }
+  .row .price { font-size: .86rem; text-align: right; }
+  .row.off .t a, .row.off .price { color: var(--muted); }
+  .chip { justify-self: end; font: 500 .62rem/1 var(--mono); letter-spacing: .08em; text-transform: uppercase; padding: 6px 9px; border-radius: 999px;
+    border: 1px solid var(--line); color: var(--muted); white-space: nowrap; }
+  .chip.ok { background: var(--signal); color: var(--signal-ink); border-color: transparent; }
+  .chip.warn { background: var(--warn-bg); color: var(--warn); border-color: transparent; }
+
+  /* ---------- deals + sources ---------- */
+  .panel { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); overflow: hidden; }
+  .panel .row:first-child { border-top: 0; }
+  .panel .row { grid-template-columns: 1fr auto; }
+  .sources { display: flex; flex-wrap: wrap; gap: 8px; }
+  .src { display: inline-flex; align-items: center; gap: 9px; text-decoration: none; font-size: .92rem; padding: 9px 14px; border-radius: 999px; background: var(--surface); border: 1px solid var(--line); }
+  .src:hover { border-color: var(--faint); }
+  .src i { width: 8px; height: 8px; border-radius: 50%; background: var(--ok-text); }
+  .src.bad i { background: var(--warn); }
+  .src small { color: var(--muted); font: 500 .66rem/1 var(--mono); }
+
+  footer { margin-top: 72px; padding-top: 22px; border-top: 1px solid var(--line); color: var(--muted); font-size: .88rem; max-width: 70ch; }
+
+  /* ---------- motion ---------- */
+  @keyframes sweep { to { transform: rotate(360deg); } }
+  @keyframes ping { 0% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--ok-text) 70%, transparent); } 100% { box-shadow: 0 0 0 16px transparent; } }
+  @keyframes blink { 50% { opacity: .25; } }
+  @keyframes rise { from { opacity: 0; transform: translateY(14px); } }
+  .intro .rise { animation: rise .7s cubic-bezier(.2, .7, .2, 1) both; animation-delay: calc(var(--i, 0) * 80ms); }
+  @media (prefers-reduced-motion: reduce) { *, *::before { animation: none !important; transition: none !important; } html { scroll-behavior: auto; } }
+
+  @media (max-width: 720px) {
+    section { margin-top: 48px; }
+    .hero { grid-template-columns: 1fr; gap: 28px; margin-top: 30px; }
+    .radar { order: -1; --size: 150px; }
+    .models { grid-template-columns: 1fr; margin-top: 36px; }
+    .hit { grid-template-columns: 1fr; padding: 18px 18px 18px 22px; }
+    .hit .buy { grid-column: 1; grid-row: auto; justify-content: space-between; margin-top: 10px; }
+    .row { grid-template-columns: 1fr auto; padding: 12px 16px; }
+    .row .chip { grid-column: 1 / -1; justify-self: start; }
+    summary { padding: 14px 16px; }
+    .wide { display: none; }
+    h1 { font-size: clamp(2.1rem, 11vw, 3rem); }
+  }
+</style>
+</head>
+<body>
+<main class="intro">
+  <header class="top rise">
+    <a class="mark" href="#">Wo PlaySi<b>?</b></a>
+    <span class="live" id="live"><i></i><span id="checked">lädt</span></span>
+  </header>
+
+  <div class="hero">
+    <div>
+      <p class="kicker rise" style="--i:1">Der PS5-Radar für Deutschland</p>
+      <h1 class="rise" style="--i:2" id="headline">Wir schauen kurz nach.</h1>
+      <p class="sub rise" style="--i:3" id="subline">Der aktuelle Stand wird geladen.</p>
+      <div class="cta rise" style="--i:4">
+        <a class="btn" href="#alarm">Alarm abonnieren</a>
+        <a class="btn ghost" href="#angebote">Alle Angebote ansehen</a>
+      </div>
+    </div>
+    <div class="radar idle rise" style="--i:3" id="radar" aria-hidden="true"><div class="sweep"></div></div>
+  </div>
+
+  <div class="models rise" style="--i:5" id="models"></div>
+
+  <section id="jetzt" hidden></section>
+
+  <section id="alarm">
+    <p class="kicker">Alarm</p>
+    <h2>Sag mir Bescheid, wenn eine da ist</h2>
+    <p class="hint">Sobald eine PS5 zum fairen Preis auftaucht, bekommst du eine Nachricht mit dem Link zum Shop. Such dir einen Weg aus.</p>
+    <div class="ways" id="ways"></div>
+  </section>
+
+  <section id="angebote">
+    <p class="kicker">Überblick</p>
+    <h2>Alle beobachteten Angebote</h2>
+    <p class="hint" id="fair-note"></p>
+    <div id="all"></div>
+  </section>
+
+  <section id="deals" hidden></section>
+
+  <section id="quellen">
+    <p class="kicker">Quellen</p>
+    <h2>Hier schaut der Radar nach</h2>
+    <p class="hint">Grün heißt: Die letzte Abfrage hat geklappt. Shops, die automatische Abfragen sperren, lässt der Radar bewusst aus.</p>
+    <div class="sources" id="sources"></div>
+  </section>
+
+  <footer>
+    Privates Hobbyprojekt ohne Gewähr. Kein Shop, keine Affiliate-Links und keine Verbindung zu Sony oder den genannten Händlern. Der Radar liest nur öffentliche Shopseiten und kauft nichts. Bestellen musst du selbst.
+  </footer>
+</main>
+
+<script>
+const $ = (id) => document.getElementById(id);
+function el(tag, attrs = {}, ...kids) {
+  const n = document.createElement(tag);
+  for (const [k, v] of Object.entries(attrs)) {
+    if (v == null || v === false) continue;
+    if (k === "class") n.className = v; else n.setAttribute(k, v);
+  }
+  for (const k of kids.flat()) if (k != null && k !== false) n.append(k.nodeType ? k : document.createTextNode(String(k)));
+  return n;
+}
+const eur = (n) => n == null ? "Preis offen" : n.toLocaleString("de-DE", { style: "currency", currency: "EUR" });
+function ago(iso) {
+  if (!iso) return "noch nie";
+  const m = Math.round((Date.now() - Date.parse(iso)) / 60000);
+  if (m < 1) return "gerade eben";
+  if (m < 60) return `vor ${m} Min.`;
+  if (m < 48 * 60) return `vor ${Math.round(m / 60)} Std.`;
+  return `vor ${Math.round(m / 1440)} Tagen`;
+}
+// Everything shown comes from shop pages, so it is inserted as text only and only
+// http(s) addresses ever become clickable.
+const safeUrl = (u) => /^https?:\/\//i.test(u || "") ? u : "#";
+const link = (u, attrs, ...kids) => el("a", { href: safeUrl(u), target: "_blank", rel: "noopener noreferrer", ...attrs }, ...kids);
+const arrow = () => { const s = document.createElementNS("http://www.w3.org/2000/svg", "svg"); s.setAttribute("viewBox", "0 0 16 16"); s.setAttribute("fill", "none"); s.setAttribute("aria-hidden", "true");
+  const p = document.createElementNS("http://www.w3.org/2000/svg", "path"); p.setAttribute("d", "M3 8h10M9 4l4 4-4 4"); p.setAttribute("stroke", "currentColor"); p.setAttribute("stroke-width", "1.8"); p.setAttribute("stroke-linecap", "round"); p.setAttribute("stroke-linejoin", "round"); s.append(p); return s; };
+
+const kind = (o) => o.alertable ? "ok" : o.availability === "InStock" ? "warn" : "off";
+const CHIP = { ok: "verfügbar", warn: "überteuert", off: "ausverkauft" };
+const minPrice = (list) => list.reduce((m, o) => (o.price != null && (m == null || o.price < m) ? o.price : m), null);
+
+function render(s) {
+  const live = s.offers.filter((o) => o.alertable).sort((a, b) => (a.price ?? 1e9) - (b.price ?? 1e9));
+  const n = live.length;
+
+  // --- top bar + hero
+  const staleMin = (Date.now() - Date.parse(s.generatedAt)) / 60000;
+  $("live").className = "live" + (staleMin > 45 ? " stale" : "");
+  $("checked").replaceChildren(...(staleMin > 45
+    ? [el("span", { class: "wide" }, "Radar hängt, "), `zuletzt ${ago(s.generatedAt)}`]
+    : ["Live · ", el("span", { class: "wide" }, "geprüft "), ago(s.generatedAt)]));
+  $("headline").replaceChildren(...(n
+    ? [el("em", {}, n === 1 ? "Eine PS5" : `${n} Konsolen`), n === 1 ? " ist gerade zu haben." : " sind gerade zu haben."]
+    : ["Gerade ist ", el("em", {}, "keine PS5"), " fair zu haben."]));
+  $("subline").textContent = n
+    ? "Zum fairen Preis und laut Shop lieferbar. Solche Bestände sind oft nach wenigen Minuten wieder weg."
+    : "Fast alles ist ausverkauft oder überteuert. Abonniere den Alarm, dann erfährst du es sofort, wenn sich das ändert.";
+
+  const radar = $("radar");
+  radar.className = "radar" + (n ? "" : " idle");
+  radar.replaceChildren(el("div", { class: "sweep" }), ...live.slice(0, 7).map((_, i) => {
+    const a = (i * 137.5 + 40) * Math.PI / 180, r = 18 + ((i * 11) % 24);
+    return el("span", { class: "blip", style: `left:${50 + r * Math.cos(a)}%;top:${50 + r * Math.sin(a)}%;animation-delay:${i * 0.35}s` });
+  }));
+
+  // --- one tile per model
+  $("models").replaceChildren(...Object.entries(s.models).map(([key, m]) => {
+    const mine = s.offers.filter((o) => o.model === key);
+    const ok = mine.filter((o) => o.alertable), pricey = mine.filter((o) => kind(o) === "warn");
+    const state = ok.length ? ["ok", `Verfügbar ab ${eur(minPrice(ok))}`]
+      : pricey.length ? ["warn", `Nur überteuert, ab ${eur(minPrice(pricey))}`]
+      : ["off", "Überall ausverkauft"];
+    return el("div", { class: `tile ${state[0]}` },
+      el("span", { class: "kicker", style: "margin:0 0 6px" }, `${mine.length} Angebote im Blick`),
+      el("span", { class: "name" }, m.label),
+      el("span", { class: "rrp" }, `Listenpreis ${eur(m.rrp)}`),
+      el("span", { class: "state" }, state[1]));
+  }));
+
+  // --- available now
+  const jetzt = $("jetzt");
+  jetzt.hidden = !n;
+  jetzt.replaceChildren(...(n ? [
+    el("p", { class: "kicker" }, "Jetzt zugreifen"),
+    el("h2", {}, n === 1 ? "Dieses Angebot ist gerade verfügbar" : "Diese Angebote sind gerade verfügbar"),
+    el("p", { class: "hint" }, "Am besten gleich prüfen. Der Radar meldet nur, bestellen musst du im Shop selbst."),
+    el("div", { class: "hits" }, live.map((o) => el("div", { class: "hit" },
+      el("div", { class: "title" }, o.title),
+      el("div", { class: "meta" }, [o.retailer, `seit ${ago(o.since).replace("vor ", "")}`, o.refurbished && "generalüberholt"].filter(Boolean).join(" · "), o.note ? el("div", {}, o.note) : null),
+      el("div", { class: "buy" }, el("span", { class: "price" }, eur(o.price)), link(o.url, { class: "btn" }, "Zum Shop", arrow())),
+    ))),
+  ] : []));
+
+  // --- ways to subscribe
+  const sub = s.subscribe || {};
+  const ways = [];
+  if (sub.ntfy) ways.push(["Push aufs Handy", ["Installiere die kostenlose App ", el("strong", {}, "ntfy"), " (iPhone und Android) und abonniere dort das Thema ", el("code", {}, sub.ntfyTopic), ". Ein Konto brauchst du nicht."], sub.ntfy, "Im Browser abonnieren"]);
+  if (sub.telegram) ways.push(["Telegram", ["Tritt dem Kanal bei. Jede neue Verfügbarkeit kommt dort als Nachricht an."], sub.telegram, "Kanal beitreten"]);
+  if (sub.email) ways.push(["E-Mail", ["Trag dich in den Verteiler ein. Abmelden kannst du dich jederzeit selbst."], sub.email, "Eintragen"]);
+  ways.push(["Slack, Teams oder RSS", ["Alle Alarme gibt es auch als Feed, zum Beispiel für einen Slack- oder Teams-Kanal im Büro."], sub.feed || "feed.xml", "Feed öffnen"]);
+  $("ways").replaceChildren(...ways.map(([name, text, url, cta], i) => el("div", { class: "way" },
+    el("span", { class: "no" }, String(i + 1).padStart(2, "0")),
+    el("span", { class: "name" }, name),
+    el("p", {}, ...text),
+    link(url, { class: "btn" + (i ? " ghost" : "") }, cta, arrow()))));
+
+  // --- every listing, grouped by model
+  $("fair-note").textContent = `Fair heißt: höchstens ${s.tolerancePct} % über Sonys Listenpreis, bei Bundles etwas mehr. Teurere Angebote stammen meist von Marktplatz-Händlern. Sie stehen hier als „überteuert“ und lösen keinen Alarm aus.`;
+  const order = { ok: 0, warn: 1, off: 2 };
+  const openBefore = new Set([...document.querySelectorAll("#all details[open]")].map((d) => d.dataset.model));
+  const firstRender = !document.querySelector("#all details");
+  $("all").replaceChildren(...Object.entries(s.models).flatMap(([key, m]) => {
+    const rows = s.offers.filter((o) => o.model === key).sort((a, b) => order[kind(a)] - order[kind(b)] || (a.price ?? 1e9) - (b.price ?? 1e9));
+    if (!rows.length) return [];
+    const okCount = rows.filter((o) => o.alertable).length;
+    const open = firstRender ? okCount > 0 : openBefore.has(key);
+    return [el("details", { "data-model": key, open: open ? "" : null },
+      el("summary", {}, el("span", { class: "name" }, m.label), el("span", { class: "count" }, `${rows.length} Angebote`),
+        el("span", { class: "chip" + (okCount ? " ok" : "") }, okCount ? `${okCount} verfügbar` : "nichts verfügbar")),
+      rows.map((o) => el("div", { class: "row " + kind(o) },
+        el("div", { class: "t" }, link(o.url, {}, o.title), el("div", { class: "m" }, [o.retailer, o.note, o.stale && "Stand veraltet"].filter(Boolean).join(" · "))),
+        el("span", { class: "price" }, eur(o.price)),
+        el("span", { class: "chip " + kind(o) }, o.availability === "Unknown" ? "unklar" : CHIP[kind(o)]))))];
+  }));
+
+  // --- mydealz
+  const deals = $("deals");
+  deals.hidden = !s.deals?.length;
+  deals.replaceChildren(...(s.deals?.length ? [
+    el("p", { class: "kicker" }, "Aus der Community"),
+    el("h2", {}, "Neue PS5-Deals auf mydealz"),
+    el("p", { class: "hint" }, "Dort melden Leute oft schon nach Minuten, wenn ein Shop wieder liefern kann. Ältere Beiträge können abgelaufen sein."),
+    el("div", { class: "panel" }, s.deals.map((d) => el("div", { class: "row" },
+      el("div", { class: "t" }, link(d.url, {}, d.title), el("div", { class: "m" }, `${d.merchant} · ${ago(d.published)}`)),
+      el("span", { class: "price" }, eur(d.price))))),
+  ] : []));
+
+  // --- sources
+  $("sources").replaceChildren(...s.sources.map((src) => link(src.url, { class: "src" + (src.ok ? "" : " bad"), title: src.ok ? "" : (src.error || "") },
+    el("i"), src.name, el("small", {}, src.ok ? `${src.count}` : (src.lastOk ? `gestört seit ${ago(src.failingSince).replace("vor ", "")}` : "gestört")))));
+}
+
+async function load() {
+  try {
+    const res = await fetch("status.json?t=" + Date.now(), { cache: "no-store" });
+    if (!res.ok) throw new Error("HTTP " + res.status);
+    render(await res.json());
+  } catch (e) {
+    $("headline").textContent = "Der Stand lässt sich gerade nicht laden.";
+    $("subline").textContent = "Bitte versuch es in ein paar Minuten noch einmal.";
+    $("checked").textContent = "keine Verbindung";
+    $("live").className = "live stale";
+  }
+}
+load();
+setInterval(load, 60000);
+// The entrance animation should play once, not on every refresh.
+setTimeout(() => document.querySelector("main").classList.remove("intro"), 1600);
+</script>
+</body>
+</html>

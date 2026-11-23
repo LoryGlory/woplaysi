@@ -1,0 +1,96 @@
+name: woplaysi
+
+on:
+  schedule:
+    # Every 5 minutes (GitHub often delays scheduled runs by 5-15 min under load).
+    - cron: "*/5 * * * *"
+  workflow_dispatch:
+    inputs:
+      test_alert:
+        description: "Nur einen Testalarm an alle Kanäle senden (kein Shop-Check)"
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Never run two checks at once: they would race on state.json and double-send alerts.
+concurrency:
+  group: woplaysi-check
+  cancel-in-progress: false
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+
+      - name: Install npm deps
+        run: npm ci
+
+      # Chromium is only needed for shops that refuse non-browser clients (Coolblue).
+      - name: Cache Playwright browsers
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
+
+      - name: Install Playwright Chromium (with deps)
+        run: npx playwright install --with-deps chromium
+
+      # "What was in stock last time" must survive between runs, otherwise every run
+      # re-sends every alert. Unique key = fresh snapshot per run; restore-keys pulls the
+      # most recent earlier one.
+      - name: Restore state
+        uses: actions/cache@v4
+        with:
+          path: state.json
+          key: woplaysi-state-${{ github.run_id }}
+          restore-keys: woplaysi-state-
+
+      - name: Configure Pages
+        id: pages
+        uses: actions/configure-pages@v5
+
+      - name: Check all sources
+        env:
+          NTFY_TOPIC: ${{ vars.NTFY_TOPIC }}
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          TELEGRAM_JOIN_URL: ${{ vars.TELEGRAM_JOIN_URL }}
+          SMTP_HOST: ${{ secrets.SMTP_HOST }}
+          SMTP_PORT: ${{ secrets.SMTP_PORT }}
+          SMTP_USER: ${{ secrets.SMTP_USER }}
+          SMTP_PASS: ${{ secrets.SMTP_PASS }}
+          EMAIL_FROM: ${{ secrets.EMAIL_FROM }}
+          EMAIL_TO: ${{ secrets.EMAIL_TO }}
+          EMAIL_SUBSCRIBE_URL: ${{ vars.EMAIL_SUBSCRIBE_URL }}
+          CONTACT_EMAIL: ${{ secrets.CONTACT_EMAIL }}
+          PRICE_TOLERANCE: ${{ vars.PRICE_TOLERANCE || '0.15' }}
+          SITE_URL: ${{ steps.pages.outputs.base_url }}
+        run: npm run ${{ inputs.test_alert && 'test-alert' || 'once' }}
+
+      # Publish the status page (site/index.html + the freshly written status.json and
+      # feed.xml). Deployed straight from the run, nothing is committed to the repo.
+      - name: Upload status page
+        if: ${{ always() && !inputs.test_alert }}
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: site
+
+      - name: Deploy status page
+        id: deploy
+        if: ${{ always() && !inputs.test_alert }}
+        uses: actions/deploy-pages@v4

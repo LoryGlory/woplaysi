@@ -1,0 +1,26 @@
+{
+  "name": "woplaysi",
+  "version": "0.1.0",
+  "description": "Polite PS5 stock monitor for German retailers (all console versions)",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "build": "tsc",
+    "once": "tsx src/index.ts",
+    "dry": "tsx src/index.ts --dry-run",
+    "test-alert": "tsx src/index.ts --test-alert",
+    "preview": "node scripts/preview.mjs",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "dotenv": "^17.4.2",
+    "nodemailer": "^10.6.1",
+    "playwright": "^1.48.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.7.0",
+    "@types/nodemailer": "^8.0.2",
+    "tsx": "^4.19.0",
+    "typescript": "^5.6.0"
+  }
+}
