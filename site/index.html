@@ -276,7 +276,7 @@ function render(s) {
     : ["Live · ", el("span", { class: "wide" }, "geprüft "), ago(s.generatedAt)]));
   $("headline").replaceChildren(...(n
     ? [el("em", {}, n === 1 ? "Eine PS5" : `${n} PS5-Angebote`), n === 1 ? " ist gerade zu haben." : " sind gerade zu haben."]
-    : ["Die PS5 ist gerade zu ", el("em", {}, "keinem fairen Preis"), " zu haben."]));
+    : ["Gerade gibt es ", el("em", {}, "keine PS5"), " zu einem fairen Preis."]));
   $("subline").textContent = n
     ? "Lieferbar und zu einem fairen Preis. Solche Bestände sind oft nach wenigen Minuten weg, also am besten gleich nachsehen."
     : "Fast überall ist sie ausverkauft oder überteuert. Abonniere den Alarm, dann bekommst du sofort Bescheid, sobald sich das ändert.";
