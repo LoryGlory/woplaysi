@@ -66,7 +66,10 @@ async function sendEmail(events: AlertEvent[]): Promise<boolean> {
     host: SMTP_HOST, port, secure: port === 465, auth: { user: SMTP_USER, pass: SMTP_PASS },
   });
   const from = process.env.EMAIL_FROM || SMTP_USER;
-  const footer = SITE_URL ? `\n\nAlle Angebote und Abmelden: ${SITE_URL}` : "";
+  const unsubscribe = process.env.EMAIL_SUBSCRIBE_URL
+    ? `Abmelden: ${process.env.EMAIL_SUBSCRIBE_URL}`
+    : "Abmelden: einfach kurz auf diese Mail antworten.";
+  const footer = `\n\n--\n${SITE_URL ? `Aktueller Stand: ${SITE_URL}\n` : ""}${unsubscribe}`;
   try {
     await transport.sendMail({
       from: `"Wo PlaySi" <${from}>`,
