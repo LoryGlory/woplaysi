@@ -37,6 +37,10 @@ function parse(html: string, sourceId: string, retailer: string, origin: string)
     if (online?.isAvailableAndBuyable === true || deliverable) availability = "InStock";
     else if (online?.isAvailableAndBuyable === false) availability = "OutOfStock";
 
+    // Raw flags in the run log: this shop answers differently depending on where the
+    // request comes from, and these lines are the only way to see that after the fact.
+    console.log(`      [${retailer} raw ${p.id}] online=${online?.onlineStatus} buyable=${online?.isAvailableAndBuyable} forDelivery=${online?.isAvailableForDelivery} delivery=${delivery?.deliveryStatus}/${delivery?.displayStatus} zipCheck=${delivery?.isZipCodeCheckNeeded} pickup=${f.CofrPickupFeature?.displayStatus}`);
+
     const marketplace = Boolean(priceF?.isProductOfTypeMarketplace || p.assortmentType === "MARKETPLACE");
     offers.push({
       id: `${sourceId}:${p.id}`,
