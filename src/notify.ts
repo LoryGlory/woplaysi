@@ -8,7 +8,7 @@ function headline(events: AlertEvent[]): string {
   const stock = events.filter((e) => e.kind === "stock");
   if (stock.length === 1) return `PS5 verfügbar bei ${stock[0].retailer}`;
   if (stock.length > 1) return `PS5 verfügbar: ${stock.length} Angebote (${[...new Set(stock.map((e) => e.retailer))].join(", ")})`;
-  return events.length === 1 ? `PS5-Deal: ${events[0].retailer}` : `${events.length} neue PS5-Deals`;
+  return events.length === 1 ? `Neuer PS5-Deal: ${events[0].retailer}` : `${events.length} neue PS5-Deals`;
 }
 
 const icon = (e: AlertEvent): string => (e.kind === "stock" ? "🟢" : e.kind === "deal" ? "🔥" : "🧪");

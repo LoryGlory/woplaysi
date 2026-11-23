@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Wo PlaySi? Der PS5-Radar für Deutschland</title>
-<meta name="description" content="Welche PS5 ist gerade wo zu einem fairen Preis lieferbar? Alle Modelle, automatisch geprüft, mit Alarm aufs Handy.">
+<meta name="description" content="Wo gibt es gerade eine PS5 zu einem fairen Preis? Alle Modelle, automatisch geprüft, mit Alarm aufs Handy.">
 <meta name="robots" content="noindex">
 <meta name="color-scheme" content="dark light">
 <link rel="alternate" type="application/atom+xml" title="Wo PlaySi: Alarme" href="feed.xml">
@@ -191,7 +191,7 @@
   <div class="hero">
     <div>
       <p class="kicker rise" style="--i:1">Der PS5-Radar für Deutschland</p>
-      <h1 class="rise" style="--i:2" id="headline">Wir schauen kurz nach.</h1>
+      <h1 class="rise" style="--i:2" id="headline">Einen Moment, wir sehen nach.</h1>
       <p class="sub rise" style="--i:3" id="subline">Der aktuelle Stand wird geladen.</p>
       <div class="cta rise" style="--i:4">
         <a class="btn" href="#alarm">Alarm abonnieren</a>
@@ -207,14 +207,14 @@
 
   <section id="alarm">
     <p class="kicker">Alarm</p>
-    <h2>Sag mir Bescheid, wenn eine da ist</h2>
-    <p class="hint">Sobald eine PS5 zum fairen Preis auftaucht, bekommst du eine Nachricht mit dem Link zum Shop. Such dir einen Weg aus.</p>
+    <h2>Bekomm Bescheid, sobald eine da ist</h2>
+    <p class="hint">Sobald eine PS5 zu einem fairen Preis lieferbar ist, bekommst du eine Nachricht mit dem Link zum Shop. Wähle, wie sie dich erreichen soll.</p>
     <div class="ways" id="ways"></div>
   </section>
 
   <section id="angebote">
     <p class="kicker">Überblick</p>
-    <h2>Alle beobachteten Angebote</h2>
+    <h2>Alle Angebote im Überblick</h2>
     <p class="hint" id="fair-note"></p>
     <div id="all"></div>
   </section>
@@ -223,13 +223,13 @@
 
   <section id="quellen">
     <p class="kicker">Quellen</p>
-    <h2>Hier schaut der Radar nach</h2>
-    <p class="hint">Grün heißt: Die letzte Abfrage hat geklappt. Shops, die automatische Abfragen sperren, lässt der Radar bewusst aus.</p>
+    <h2>Hier sieht der Radar nach</h2>
+    <p class="hint">Ein grüner Punkt heißt: Die letzte Abfrage hat geklappt. Shops, die automatische Abfragen sperren, lässt der Radar bewusst aus.</p>
     <div class="sources" id="sources"></div>
   </section>
 
   <footer>
-    Privates Hobbyprojekt ohne Gewähr. Kein Shop, keine Affiliate-Links und keine Verbindung zu Sony oder den genannten Händlern. Der Radar liest nur öffentliche Shopseiten und kauft nichts. Bestellen musst du selbst.
+    Privates Hobbyprojekt, alle Angaben ohne Gewähr. Kein Shop, keine Affiliate-Links und keine Verbindung zu Sony oder den genannten Händlern. Der Radar liest nur öffentliche Shopseiten und kauft nichts. Bestellen musst du selbst.
   </footer>
 </main>
 
@@ -244,7 +244,7 @@ function el(tag, attrs = {}, ...kids) {
   for (const k of kids.flat()) if (k != null && k !== false) n.append(k.nodeType ? k : document.createTextNode(String(k)));
   return n;
 }
-const eur = (n) => n == null ? "Preis offen" : n.toLocaleString("de-DE", { style: "currency", currency: "EUR" });
+const eur = (n) => n == null ? "Preis unbekannt" : n.toLocaleString("de-DE", { style: "currency", currency: "EUR" });
 function ago(iso) {
   if (!iso) return "noch nie";
   const m = Math.round((Date.now() - Date.parse(iso)) / 60000);
@@ -275,11 +275,11 @@ function render(s) {
     ? [el("span", { class: "wide" }, "Radar hängt, "), `zuletzt ${ago(s.generatedAt)}`]
     : ["Live · ", el("span", { class: "wide" }, "geprüft "), ago(s.generatedAt)]));
   $("headline").replaceChildren(...(n
-    ? [el("em", {}, n === 1 ? "Eine PS5" : `${n} Konsolen`), n === 1 ? " ist gerade zu haben." : " sind gerade zu haben."]
-    : ["Gerade ist ", el("em", {}, "keine PS5"), " fair zu haben."]));
+    ? [el("em", {}, n === 1 ? "Eine PS5" : `${n} PS5-Angebote`), n === 1 ? " ist gerade zu haben." : " sind gerade zu haben."]
+    : ["Die PS5 ist gerade zu ", el("em", {}, "keinem fairen Preis"), " zu haben."]));
   $("subline").textContent = n
-    ? "Zum fairen Preis und laut Shop lieferbar. Solche Bestände sind oft nach wenigen Minuten wieder weg."
-    : "Fast alles ist ausverkauft oder überteuert. Abonniere den Alarm, dann erfährst du es sofort, wenn sich das ändert.";
+    ? "Lieferbar und zu einem fairen Preis. Solche Bestände sind oft nach wenigen Minuten weg, also am besten gleich nachsehen."
+    : "Fast überall ist sie ausverkauft oder überteuert. Abonniere den Alarm, dann bekommst du sofort Bescheid, sobald sich das ändert.";
 
   const radar = $("radar");
   radar.className = "radar" + (n ? "" : " idle");
@@ -293,7 +293,7 @@ function render(s) {
     const mine = s.offers.filter((o) => o.model === key);
     const ok = mine.filter((o) => o.alertable), pricey = mine.filter((o) => kind(o) === "warn");
     const state = ok.length ? ["ok", `Verfügbar ab ${eur(minPrice(ok))}`]
-      : pricey.length ? ["warn", `Nur überteuert, ab ${eur(minPrice(pricey))}`]
+      : pricey.length ? ["warn", `Nur überteuert zu haben, ab ${eur(minPrice(pricey))}`]
       : ["off", "Überall ausverkauft"];
     return el("div", { class: `tile ${state[0]}` },
       el("span", { class: "kicker", style: "margin:0 0 6px" }, `${mine.length} Angebote im Blick`),
@@ -308,21 +308,21 @@ function render(s) {
   jetzt.replaceChildren(...(n ? [
     el("p", { class: "kicker" }, "Jetzt zugreifen"),
     el("h2", {}, n === 1 ? "Dieses Angebot ist gerade verfügbar" : "Diese Angebote sind gerade verfügbar"),
-    el("p", { class: "hint" }, "Am besten gleich prüfen. Der Radar meldet nur, bestellen musst du im Shop selbst."),
+    el("p", { class: "hint" }, "Am besten gleich nachsehen. Der Radar meldet nur. Bestellen musst du selbst im Shop."),
     el("div", { class: "hits" }, live.map((o) => el("div", { class: "hit" },
       el("div", { class: "title" }, o.title),
-      el("div", { class: "meta" }, [o.retailer, `seit ${ago(o.since).replace("vor ", "")}`, o.refurbished && "generalüberholt"].filter(Boolean).join(" · "), o.note ? el("div", {}, o.note) : null),
-      el("div", { class: "buy" }, el("span", { class: "price" }, eur(o.price)), link(o.url, { class: "btn" }, "Zum Shop", arrow())),
+      el("div", { class: "meta" }, [o.retailer, `verfügbar seit ${ago(o.since).replace("vor ", "")}`, o.refurbished && "generalüberholt"].filter(Boolean).join(" · "), o.note ? el("div", {}, o.note) : null),
+      el("div", { class: "buy" }, el("span", { class: "price" }, eur(o.price)), link(o.url, { class: "btn" }, "Zum Angebot", arrow())),
     ))),
   ] : []));
 
   // --- ways to subscribe
   const sub = s.subscribe || {};
   const ways = [];
-  if (sub.ntfy) ways.push(["Push aufs Handy", ["Installiere die kostenlose App ", el("strong", {}, "ntfy"), " (iPhone und Android) und abonniere dort das Thema ", el("code", {}, sub.ntfyTopic), ". Ein Konto brauchst du nicht."], sub.ntfy, "Im Browser abonnieren"]);
-  if (sub.telegram) ways.push(["Telegram", ["Tritt dem Kanal bei. Jede neue Verfügbarkeit kommt dort als Nachricht an."], sub.telegram, "Kanal beitreten"]);
-  if (sub.email) ways.push(["E-Mail", ["Trag dich in den Verteiler ein. Abmelden kannst du dich jederzeit selbst."], sub.email, "Eintragen"]);
-  ways.push(["Slack, Teams oder RSS", ["Alle Alarme gibt es auch als Feed, zum Beispiel für einen Slack- oder Teams-Kanal im Büro."], sub.feed || "feed.xml", "Feed öffnen"]);
+  if (sub.ntfy) ways.push(["Push aufs Handy", ["Lade die kostenlose App ", el("strong", {}, "ntfy"), " (iPhone und Android) und abonniere dort das Thema ", el("code", {}, sub.ntfyTopic), ". Du brauchst kein Konto."], sub.ntfy, "Im Browser abonnieren"]);
+  if (sub.telegram) ways.push(["Telegram", ["Tritt dem Kanal bei. Jede Meldung kommt dort als Nachricht an."], sub.telegram, "Dem Kanal beitreten"]);
+  if (sub.email) ways.push(["E-Mail", ["Trag dich in den Verteiler ein. Abmelden kannst du dich jederzeit selbst."], sub.email, "Für E-Mails eintragen"]);
+  ways.push(["Slack, Teams oder RSS", ["Alle Meldungen gibt es auch als Feed, zum Beispiel für einen Slack- oder Teams-Kanal im Büro."], sub.feed || "feed.xml", "Feed öffnen"]);
   $("ways").replaceChildren(...ways.map(([name, text, url, cta], i) => el("div", { class: "way" },
     el("span", { class: "no" }, String(i + 1).padStart(2, "0")),
     el("span", { class: "name" }, name),
@@ -330,7 +330,7 @@ function render(s) {
     link(url, { class: "btn" + (i ? " ghost" : "") }, cta, arrow()))));
 
   // --- every listing, grouped by model
-  $("fair-note").textContent = `Fair heißt: höchstens ${s.tolerancePct} % über Sonys Listenpreis, bei Bundles etwas mehr. Teurere Angebote stammen meist von Marktplatz-Händlern. Sie stehen hier als „überteuert“ und lösen keinen Alarm aus.`;
+  $("fair-note").textContent = `Fair heißt: höchstens ${s.tolerancePct} % über Sonys Listenpreis, bei Bundles etwas mehr. Was teurer ist, stammt meist von Marktplatz-Händlern. Es steht hier als „überteuert“ und löst keinen Alarm aus.`;
   const order = { ok: 0, warn: 1, off: 2 };
   const openBefore = new Set([...document.querySelectorAll("#all details[open]")].map((d) => d.dataset.model));
   const firstRender = !document.querySelector("#all details");
@@ -354,7 +354,7 @@ function render(s) {
   deals.replaceChildren(...(s.deals?.length ? [
     el("p", { class: "kicker" }, "Aus der Community"),
     el("h2", {}, "Neue PS5-Deals auf mydealz"),
-    el("p", { class: "hint" }, "Dort melden Leute oft schon nach Minuten, wenn ein Shop wieder liefern kann. Ältere Beiträge können abgelaufen sein."),
+    el("p", { class: "hint" }, "Auf mydealz melden Leute oft schon nach Minuten, wenn ein Shop wieder liefern kann. Ältere Beiträge können abgelaufen sein."),
     el("div", { class: "panel" }, s.deals.map((d) => el("div", { class: "row" },
       el("div", { class: "t" }, link(d.url, {}, d.title), el("div", { class: "m" }, `${d.merchant} · ${ago(d.published)}`)),
       el("span", { class: "price" }, eur(d.price))))),
@@ -372,7 +372,7 @@ async function load() {
     render(await res.json());
   } catch (e) {
     $("headline").textContent = "Der Stand lässt sich gerade nicht laden.";
-    $("subline").textContent = "Bitte versuch es in ein paar Minuten noch einmal.";
+    $("subline").textContent = "Bitte versuch es in ein paar Minuten noch mal.";
     $("checked").textContent = "keine Verbindung";
     $("live").className = "live stale";
   }

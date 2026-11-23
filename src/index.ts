@@ -76,7 +76,7 @@ async function main() {
         if (seen.has(d.id)) continue;
         seen.add(d.id);
         // First read only seeds: months-old posts are not news.
-        if (!firstRead) alerts.push({ at: now, kind: "deal", title: d.title, retailer: `mydealz → ${d.merchant}`, price: d.price, url: d.url });
+        if (!firstRead) alerts.push({ at: now, kind: "deal", title: d.title, retailer: `${d.merchant} (über mydealz)`, price: d.price, url: d.url });
       }
       state.seenDeals = [...seen].slice(-500);
       state.deals = result.deals.slice(0, 15);

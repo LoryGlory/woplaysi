@@ -49,7 +49,7 @@ function parse(html: string, sourceId: string, retailer: string, origin: string)
       url: origin + p.url,
       price: priceF?.price?.amount ?? null,
       availability,
-      note: marketplace ? "Marketplace-Händler" : undefined,
+      note: marketplace ? "Marktplatz-Händler" : undefined,
     });
   }
   return offers;
